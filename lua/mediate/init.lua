@@ -2,18 +2,30 @@
 
 -- TODO: probably encapsulate this into a table?
 local mediation_active = false
-local active_win_left = -1
-local active_buf_left = -1
-local active_win_right = -1
-local active_buf_right = -1
+local mediate_win_left = -1
+local mediate_buf_left = -1
+local mediate_win_right = -1
+local mediate_buf_right = -1
 local original_win = -1
 local original_buf = -1
 local original_line_start = -1
 local original_line_end = -1
 
 local match_conflict_start = function(s)
-  local start_marker = "<<<<<<<"
-  local starts_with_marker = string.sub(s, 1, string.len(start_marker)) == start_marker
+  local marker = "<<<<<<<"
+  local starts_with_marker = string.sub(s, 1, string.len(marker)) == marker
+  return starts_with_marker
+end
+
+local match_conflict_end = function(s)
+  local marker = ">>>>>>>"
+  local starts_with_marker = string.sub(s, 1, string.len(marker)) == marker
+  return starts_with_marker
+end
+
+local match_conflict_sep = function(s)
+  local marker = "======="
+  local starts_with_marker = string.sub(s, 1, string.len(marker)) == marker
   return starts_with_marker
 end
 
@@ -24,6 +36,10 @@ local mediate_start = function()
     do return end
   end
 
+  -- get the current win and buf
+  original_win = vim.api.nvim_get_current_win()
+  original_buf = vim.api.nvim_get_current_buf()
+
   -- get text from cursor
   local current_line_contents = vim.api.nvim_get_current_line()
   -- verify that at conflict (by marker)
@@ -32,18 +48,46 @@ local mediate_start = function()
     do return end
   end
   -- split into party A and B (by markers)
+  local start_line_nr = vim.api.nvim_win_get_cursor(original_win)[1]
+  local sep_line_nr = -1
+  local end_line_nr = -1
+  for line_ofs, line in ipairs(vim.api.nvim_buf_get_lines(original_buf, start_line_nr - 1, -1, false)) do
+    if match_conflict_sep(line) then
+      if sep_line_nr ~= -1 then
+        print("ILLEGAL: seem to have found a second sep (octopus merges are not supported, I wouldn't even know what they look like with conflict markers tbh)")
+        do return end
+      end
+      sep_line_nr = start_line_nr + line_ofs - 1
+    elseif match_conflict_end(line) then
+      if sep_line_nr == -1 then
+        print("ILLEGAL: seem to have found end of conflict before finding sep (line:", (start_line_nr + line_ofs - 1),
+          ")")
+        do return end
+      end
+      end_line_nr = start_line_nr + line_ofs - 1
+      break
+    end
+  end
+  local a_lines = vim.api.nvim_buf_get_lines(original_buf, start_line_nr, sep_line_nr - 1, true)
+  local b_lines = vim.api.nvim_buf_get_lines(original_buf, sep_line_nr, end_line_nr - 1, true)
+  original_line_start = start_line_nr
+  original_line_end = end_line_nr
 
-  -- open new tab
-  -- create two splits
-  -- put buffers in
-
+  -- open new tab and create two splits, keep the windows and the buffers
+  vim.cmd('tabnew')
+  mediate_win_right = vim.api.nvim_get_current_win()
+  mediate_buf_right = vim.api.nvim_get_current_buf()
+  vim.cmd('vnew')
+  mediate_win_left = vim.api.nvim_get_current_win()
+  mediate_buf_left = vim.api.nvim_get_current_buf()
   -- populate buffers with content
+  vim.api.nvim_buf_set_lines(mediate_buf_left, 0, 0, false, a_lines)
+  vim.api.nvim_buf_set_lines(mediate_buf_right, 0, 0, false, b_lines)
   -- start diff mode
+  vim.cmd('windo diffthis')
 
   -- set state to await mediate_finish
   mediation_active = true
-
-  print("TODO")
 end
 
 local mediate_finish = function()
