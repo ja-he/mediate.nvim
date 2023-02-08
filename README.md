@@ -1,32 +1,16 @@
-# nvim-lua-plugin-template
+# mediate.nvim
 
-This repository is a template for Neovim plugins written in Lua.
+A very simple Neovim plugin to help you with manual Git conflict resolution.
 
-The intention is that you use this template to create a new repository where you then adapt this readme and add your plugin code.
-The template includes the following:
-
-- GitHub workflows to run linters and tests
-- Minimal test setup
-- EditorConfig
-- A .luacheckrc
-
-
-To get started writing a Lua plugin, I recommend reading the [nvim-lua-guide][nvim-lua-guide].
-
-## Scope
-
-Anything that the majority of plugin authors will want to have is in scope of
-this starter template. Anything that is controversial is out-of-scope.
+| Status                            |
+| ------                            |
+| `Work in Progress : DO NOT USE YET` |
 
 ---
-
-
-The remainder of the README is text that can be preserved in your plugin:
-
----
-
 
 ## Development
+
+_this section carried over from [nvim-lua-plugin-template](https://github.com/nvim-lua/nvim-lua-plugin-template)_
 
 ### Run tests
 
