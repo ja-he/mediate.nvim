@@ -81,8 +81,8 @@ local mediate_start = function()
   mediate_win_left = vim.api.nvim_get_current_win()
   mediate_buf_left = vim.api.nvim_get_current_buf()
   -- populate buffers with content
-  vim.api.nvim_buf_set_lines(mediate_buf_left, 0, 0, false, a_lines)
-  vim.api.nvim_buf_set_lines(mediate_buf_right, 0, 0, false, b_lines)
+  vim.api.nvim_buf_set_lines(mediate_buf_left, 0, 1, false, a_lines)
+  vim.api.nvim_buf_set_lines(mediate_buf_right, 0, 1, false, b_lines)
   -- start diff mode
   vim.cmd('windo diffthis')
 
