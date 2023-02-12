@@ -98,11 +98,20 @@ local mediate_finish = function()
   end
 
   -- get mediation result from buffer
+  local lines_left = vim.api.nvim_buf_get_lines(mediate_buf_left, 0, -1, false)
+  local lines_right = vim.api.nvim_buf_get_lines(mediate_buf_right, 0, -1, false)
   -- verify result (no conflict markers left, ...)
+  if table.concat(lines_left) ~= table.concat(lines_right) then
+    print("ILLEGAL: buffer contents do not match, conflict has not been mediated fully")
+    do return end
+  end
 
   -- close temporary buffers, windows, tab, ...
+  vim.api.nvim_win_close(mediate_win_left, true)
+  vim.api.nvim_win_close(mediate_win_right, true)
 
   -- put result back to original buffer's range
+  vim.api.nvim_buf_set_lines(original_buf, original_line_start-1, original_line_end, true, lines_left)
 
   mediation_active = false
   print("SUCCESS: mediation concluded")
