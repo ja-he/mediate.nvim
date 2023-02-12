@@ -2,9 +2,9 @@
 
 A very simple Neovim plugin to help you with manual Git conflict resolution.
 
-| Status                            |
-| ------                            |
-| `Work in Progress : DO NOT USE YET` |
+| Status                         |
+| ------                         |
+| `Work in Progress, but usable` |
 
 ---
 
