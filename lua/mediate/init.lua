@@ -11,6 +11,18 @@ local original_buf = -1
 local original_line_start = -1
 local original_line_end = -1
 
+local reset = function()
+  mediation_active = false
+  mediate_win_left = -1
+  mediate_buf_left = -1
+  mediate_win_right = -1
+  mediate_buf_right = -1
+  original_win = -1
+  original_buf = -1
+  original_line_start = -1
+  original_line_end = -1
+end
+
 local match_conflict_start = function(s)
   local marker = "<<<<<<<"
   local starts_with_marker = string.sub(s, 1, string.len(marker)) == marker
@@ -119,6 +131,8 @@ local mediate_finish = function()
 
   mediation_active = false
   print("SUCCESS: mediation concluded")
+
+  reset()
 end
 
 return {
