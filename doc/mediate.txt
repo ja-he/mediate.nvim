@@ -1,0 +1,32 @@
+*mediate.nvim* helps you with (Git) conflict resolution
+
+Author: Jan Hensel <github.com/ja-he>
+
+QUICKSTART                                      *mediate-quickstart*
+
+Use it as follows:
+  1. |:MediateStart| on the start of a conflict.  
+     This will open a two scratch buffers in a new tab and diff them for you.
+  2. Bring the buffers into the same state.
+  3. |:MediateFinish| (anywhere) to finish the mediation and place the buffer
+     content back to replace the original conflict.
+
+COMMANDS                                        *mediate-commands*
+
+                                                *:MediateStart*
+    MediateStart:  
+        Start the mediation process.
+        This opens a diff view of the two sides for you to manually resolve
+        the conflict.
+
+        Run this on a the start of a conflict.
+
+                                                *:MediateFinish*
+    MediateFinish:  
+        Finish the mediation process.
+        Close the temporary mediation buffers and move result back to replace
+        original conflict.
+
+        Only use after `:MediateStart`
+
+ vim:tw=78:ts=8:ft=help:norl:
