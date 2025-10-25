@@ -1,4 +1,4 @@
--- core plugin logic
+local conflict = require('mediate.conflict')
 
 -- TODO: probably encapsulate this into a table?
 local mediation_active = false
@@ -29,30 +29,6 @@ local reset = function()
   is_diff3_style = false
 end
 
-local match_conflict_start = function(s)
-  local marker = "<<<<<<<"
-  local starts_with_marker = string.sub(s, 1, string.len(marker)) == marker
-  return starts_with_marker
-end
-
-local match_conflict_end = function(s)
-  local marker = ">>>>>>>"
-  local starts_with_marker = string.sub(s, 1, string.len(marker)) == marker
-  return starts_with_marker
-end
-
-local match_conflict_sep = function(s)
-  local marker = "======="
-  local starts_with_marker = string.sub(s, 1, string.len(marker)) == marker
-  return starts_with_marker
-end
-
-local match_conflict_base = function(s)
-  local marker = "|||||||"
-  local starts_with_marker = string.sub(s, 1, string.len(marker)) == marker
-  return starts_with_marker
-end
-
 local mediate_start = function()
   -- ensure not already started
   if mediation_active then
@@ -64,70 +40,24 @@ local mediate_start = function()
   original_win = vim.api.nvim_get_current_win()
   original_buf = vim.api.nvim_get_current_buf()
 
-  -- get text from cursor
-  local current_line_contents = vim.api.nvim_get_current_line()
-  -- verify that at conflict (by marker)
-  if not match_conflict_start(current_line_contents) then
-    print("ILLEGAL: current line not a conflict start")
-    do return end
+  local cursor_line_nr = vim.api.nvim_win_get_cursor(original_win)[1]
+  local conflict_info, err = conflict.parse_conflict(original_buf, cursor_line_nr)
+  if not conflict_info then
+    print("ILLEGAL: " .. err)
+    return
   end
 
-  -- split into sections (by markers)
-  -- first pass: detect conflict style and find all markers
-  local start_line_nr = vim.api.nvim_win_get_cursor(original_win)[1]
-  local base_line_nr = -1
-  local sep_line_nr = -1
-  local end_line_nr = -1
+  is_diff3_style = conflict_info.is_diff3
+  original_line_start = conflict_info.start_line
+  original_line_end = conflict_info.end_line
 
-  for line_ofs, line in ipairs(vim.api.nvim_buf_get_lines(original_buf, start_line_nr - 1, -1, false)) do
-    if match_conflict_start(line) then
-      -- Nothing to do for now...
-    elseif match_conflict_base(line) then
-      if base_line_nr ~= -1 then
-        print("ILLEGAL: found multiple base markers (|||||||)")
-        do return end
-      end
-      base_line_nr = start_line_nr + line_ofs - 1
-      is_diff3_style = true
-    elseif match_conflict_sep(line) then
-      if sep_line_nr ~= -1 then
-        print("ILLEGAL: seem to have found a second sep (octopus merges are not supported)")
-        do return end
-      end
-      sep_line_nr = start_line_nr + line_ofs - 1
-    elseif match_conflict_end(line) then
-      if sep_line_nr == -1 then
-        print("ILLEGAL: seem to have found end of conflict before finding sep (line:", (start_line_nr + line_ofs - 1),
-          ")")
-        do return end
-      end
-      end_line_nr = start_line_nr + line_ofs - 1
-      break
-    else
-      -- Nothing to do for now...
-    end
-  end
-
-  -- extract content based on conflict style
-  local ours_lines, base_lines, theirs_lines
-
+  -- Extract content using helper function
+  local ours_lines = conflict.extract_range(original_buf, conflict_info.ours_range)
+  local theirs_lines = conflict.extract_range(original_buf, conflict_info.theirs_range)
+  local base_lines = nil
   if is_diff3_style then
-    -- diff3/zdiff3 style: <<<<<<< ours ||||||| base ======= theirs >>>>>>>
-    if base_line_nr == -1 then
-      print("ILLEGAL: expected base marker but didn't find one")
-      do return end
-    end
-    ours_lines = vim.api.nvim_buf_get_lines(original_buf, start_line_nr, base_line_nr - 1, true)
-    base_lines = vim.api.nvim_buf_get_lines(original_buf, base_line_nr, sep_line_nr - 1, true)
-    theirs_lines = vim.api.nvim_buf_get_lines(original_buf, sep_line_nr, end_line_nr - 1, true)
-  else
-    -- standard diff2 style: <<<<<<< ours ======= theirs >>>>>>>
-    ours_lines = vim.api.nvim_buf_get_lines(original_buf, start_line_nr, sep_line_nr - 1, true)
-    theirs_lines = vim.api.nvim_buf_get_lines(original_buf, sep_line_nr, end_line_nr - 1, true)
+    base_lines = conflict.extract_range(original_buf, conflict_info.base_range)
   end
-
-  original_line_start = start_line_nr
-  original_line_end = end_line_nr
 
   -- open new tab and create splits
   vim.cmd('tabnew')
