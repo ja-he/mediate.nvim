@@ -134,7 +134,6 @@ local mediate_finish = function()
   -- put result back to original buffer's range
   vim.api.nvim_buf_set_lines(original_buf, original_line_start - 1, original_line_end, true, lines_left)
 
-  mediation_active = false
   print("SUCCESS: mediation concluded")
 
   reset()
