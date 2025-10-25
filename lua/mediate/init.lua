@@ -66,7 +66,8 @@ local mediate_start = function()
   for line_ofs, line in ipairs(vim.api.nvim_buf_get_lines(original_buf, start_line_nr - 1, -1, false)) do
     if match_conflict_sep(line) then
       if sep_line_nr ~= -1 then
-        print("ILLEGAL: seem to have found a second sep (octopus merges are not supported, I wouldn't even know what they look like with conflict markers tbh)")
+        print(
+        "ILLEGAL: seem to have found a second sep (octopus merges are not supported, I wouldn't even know what they look like with conflict markers tbh)")
         do return end
       end
       sep_line_nr = start_line_nr + line_ofs - 1
@@ -131,7 +132,7 @@ local mediate_finish = function()
   vim.api.nvim_buf_delete(mediate_buf_right, { force = true })
 
   -- put result back to original buffer's range
-  vim.api.nvim_buf_set_lines(original_buf, original_line_start-1, original_line_end, true, lines_left)
+  vim.api.nvim_buf_set_lines(original_buf, original_line_start - 1, original_line_end, true, lines_left)
 
   mediation_active = false
   print("SUCCESS: mediation concluded")
