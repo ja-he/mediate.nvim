@@ -126,6 +126,10 @@ local mediate_finish = function()
   vim.api.nvim_win_close(mediate_win_left, true)
   vim.api.nvim_win_close(mediate_win_right, true)
 
+  -- delete the buffers
+  vim.api.nvim_buf_delete(mediate_buf_left, { force = true })
+  vim.api.nvim_buf_delete(mediate_buf_right, { force = true })
+
   -- put result back to original buffer's range
   vim.api.nvim_buf_set_lines(original_buf, original_line_start-1, original_line_end, true, lines_left)
 
